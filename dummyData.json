@@ -5,11 +5,23 @@
     "description": "Global technology company focused on software, cloud services, productivity tools, and hardware.",
     "logo_url": "https://api.elbstream.com/logos/symbol/MSFT",
     "website": "https://www.microsoft.com",
-    "location": "Redmond, Washington, USA",
-    "industry": "Technology",
+    "location": {
+      "address": "One Microsoft Way",
+      "city": "Redmond",
+      "zip_code": "98052",
+      "country": "USA"
+    },
+    "industry": {
+      "primary": "Technology",
+      "sectors": ["Software", "Cloud Computing", "Hardware", "Gaming"]
+    },
     "employee_count": 220000,
     "founded": 1975,
-    "ceo": "Satya Nadella"
+    "ceo": {
+      "name": "Satya Nadella",
+      "since": 2014,
+      "bio": "Satya Nadella is an Indian-American business executive who has been the CEO of Microsoft since 2014, transforming the company's culture and driving cloud computing growth."
+    }
   },
   {
     "id": "b7c1e4f5-2d6a-4b9f-8e3c-1f2d7a9b4c22",
@@ -29,10 +41,21 @@
     "description": "Electric vehicle and clean energy company producing electric cars, battery storage, and solar products.",
     "logo_url": "https://api.elbstream.com/logos/symbol/TSLA",
     "website": "https://www.tesla.com",
-    "location": "Austin, Texas, USA",
-    "industry": "Automotive & Energy",
+    "location": {
+      "address": "1 Tesla Road",
+      "city": "Austin",
+      "zip_code": "78725",
+      "country": "USA"
+    },
+    "industry": {
+      "primary": "Automotive & Energy",
+      "sectors": ["Electric Vehicles", "Battery Technology", "Solar Energy", "Autonomous Driving"]
+    },
     "employee_count": 127000,
     "founded": 2003,
-    "ceo": "Elon Musk"
+    "ceo": {
+      "name": "Elon Musk",
+      "since": 2008
+    }
   }
 ]
