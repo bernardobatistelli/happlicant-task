@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: paradedb/paradedb:latest
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: happlicant
+    volumes:
+      - ./data/pg:/data/postgres

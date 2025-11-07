@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id            String   @id
+  name          String
+  description   String?
+  logoUrl       String?  @map("logo_url")
+  website       String?
+  location      Json?    
+  industry      Json?    
+  employeeCount Int?     @map("employee_count")
+  founded       Int?
+  ceo           Json?    
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("companies")
+}
