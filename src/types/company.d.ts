@@ -34,3 +34,13 @@ export type Company = {
   founded?: number;
   ceo?: CEO;
 };
+
+/**
+ * Form action state for structured error responses
+ */
+export type FormActionState = {
+  success: boolean;
+  message?: string;
+  errors?: Record<string, string[]>;
+  data?: Company;
+};
