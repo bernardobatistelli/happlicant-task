@@ -1,6 +1,9 @@
 "use client";
 
+import { deleteCompanyAction } from "@/actions/companies";
 import { CompanyCard, CompanyCardSkeleton } from "@/components/company-card";
+import { DeleteCompanyDialog } from "@/components/dialogs/delete-company-dialog";
+import { EditCompanyDialog } from "@/components/dialogs/edit-company-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -11,6 +14,8 @@ import {
 import type { Company } from "@/types/company";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { parseAsInteger, useQueryState } from "nuqs";
+import { useOptimistic, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { CompaniesTable, CompaniesTableSkeleton } from "./companies-table";
 
 interface CompaniesPaginatedListProps {
@@ -24,37 +29,72 @@ export function CompaniesPaginatedList({
   itemsPerPage = 6,
   initialPage,
 }: CompaniesPaginatedListProps) {
-  // Use nuqs to manage page state in URL
   const [currentPage, setCurrentPage] = useQueryState(
     "page",
     parseAsInteger.withDefault(initialPage),
   );
 
-  // Ensure currentPage is never null
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [companyToEdit, setCompanyToEdit] = useState<Company | null>(null);
+
+  const [, startTransition] = useTransition();
+
+  const [optimisticCompanies, updateOptimistic] = useOptimistic(
+    companies,
+    (state, action: { type: "delete"; id: string } | { type: "update"; company: Company }) => {
+      if (action.type === "delete") {
+        return state.filter((c) => c.id !== action.id);
+      } else {
+        return state.map((c) => (c.id === action.company.id ? action.company : c));
+      }
+    },
+  );
+
   const activePage = currentPage ?? initialPage;
 
-  const totalPages = Math.ceil(companies.length / itemsPerPage);
+  const totalPages = Math.ceil(optimisticCompanies.length / itemsPerPage);
   const startIndex = (activePage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentCompanies = companies.slice(startIndex, endIndex);
+  const currentCompanies = optimisticCompanies.slice(startIndex, endIndex);
 
   const handleEdit = (company: Company) => {
-    // TODO: Implement edit dialog
-    console.log("Edit company:", company.name);
+    setCompanyToEdit(company);
+    setEditDialogOpen(true);
   };
 
   const handleDelete = (company: Company) => {
-    // TODO: Implement delete dialog
-    console.log("Delete company:", company.name);
+    setCompanyToDelete(company);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async (company: Company) => {
+    startTransition(async () => {
+      updateOptimistic({ type: "delete", id: company.id });
+
+      const result = await deleteCompanyAction(company.id);
+
+      if (result.success) {
+        toast.success(result.message ?? "Company deleted successfully!");
+      } else {
+        toast.error(result.message ?? "Failed to delete company.");
+      }
+    });
+  };
+
+  const handleEditSuccess = (updatedCompany: Company) => {
+    startTransition(() => {
+      updateOptimistic({ type: "update", company: updatedCompany });
+    });
   };
 
   const goToPage = (page: number) => {
     void setCurrentPage(page);
-    // Scroll to top of list
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pages: (number | "ellipsis")[] = [];
     const maxVisible = 5;
@@ -91,7 +131,7 @@ export function CompaniesPaginatedList({
     return pages;
   };
 
-  if (companies.length === 0) {
+  if (optimisticCompanies.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <p className="text-muted-foreground text-lg">No companies found.</p>
@@ -103,88 +143,109 @@ export function CompaniesPaginatedList({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:hidden">
-        {currentCompanies.map((company) => (
-          <CompanyCard
-            key={company.id}
-            company={company}
+    <>
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:hidden">
+          {currentCompanies.map((company) => (
+            <CompanyCard
+              key={company.id}
+              company={company}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+
+        <div className="hidden xl:block">
+          <CompaniesTable
+            companies={currentCompanies}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
-        ))}
-      </div>
+        </div>
 
-      <div className="hidden xl:block">
-        <CompaniesTable
-          companies={currentCompanies}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination>
+            <PaginationContent>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination>
-          <PaginationContent>
-            {/* Previous Button */}
-            <PaginationItem>
-              <Button
-                variant="ghost"
-                size="default"
-                className="gap-1 px-2.5 sm:pl-2.5"
-                onClick={() => goToPage(Math.max(1, activePage - 1))}
-                disabled={activePage === 1}
-                aria-label="Go to previous page"
-              >
-                <ChevronLeft className="size-4" />
-                <span className="hidden sm:block">Previous</span>
-              </Button>
-            </PaginationItem>
-
-            {/* Page Numbers */}
-            {getPageNumbers().map((page, index) => (
-              <PaginationItem key={index}>
-                {page === "ellipsis" ? (
-                  <PaginationEllipsis />
-                ) : (
-                  <Button
-                    variant={activePage === page ? "outline" : "ghost"}
-                    size="icon"
-                    onClick={() => goToPage(page)}
-                    aria-label={`Go to page ${page}`}
-                    aria-current={activePage === page ? "page" : undefined}
-                  >
-                    {page}
-                  </Button>
-                )}
+              {/* Previous Button */}
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  size="default"
+                  className="gap-1 px-2.5 sm:pl-2.5"
+                  onClick={() => goToPage(Math.max(1, activePage - 1))}
+                  disabled={activePage === 1}
+                  aria-label="Go to previous page"
+                >
+                  <ChevronLeft className="size-4" />
+                  <span className="hidden sm:block">Previous</span>
+                </Button>
               </PaginationItem>
-            ))}
 
-            {/* Next Button */}
-            <PaginationItem>
-              <Button
-                variant="ghost"
-                size="default"
-                className="gap-1 px-2.5 sm:pr-2.5"
-                onClick={() => goToPage(Math.min(totalPages, activePage + 1))}
-                disabled={activePage === totalPages}
-                aria-label="Go to next page"
-              >
-                <span className="hidden sm:block">Next</span>
-                <ChevronRight className="size-4" />
-              </Button>
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
+              {/* Page Numbers */}
+              {getPageNumbers().map((page, index) => (
+                <PaginationItem key={index}>
+                  {page === "ellipsis" ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <Button
+                      variant={activePage === page ? "outline" : "ghost"}
+                      size="icon"
+                      onClick={() => goToPage(page)}
+                      aria-label={`Go to page ${page}`}
+                      aria-current={activePage === page ? "page" : undefined}
+                    >
+                      {page}
+                    </Button>
+                  )}
+                </PaginationItem>
+              ))}
 
-      {/* Pagination Info */}
-      <div className="text-muted-foreground text-center text-sm">
-        Showing {startIndex + 1}-{Math.min(endIndex, companies.length)} of{" "}
-        {companies.length} companies
+              {/* Next Button */}
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  size="default"
+                  className="gap-1 px-2.5 sm:pr-2.5"
+                  onClick={() => goToPage(Math.min(totalPages, activePage + 1))}
+                  disabled={activePage === totalPages}
+                  aria-label="Go to next page"
+                >
+                  <span className="hidden sm:block">Next</span>
+                  <ChevronRight className="size-4" />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
+
+        {/* Pagination Info */}
+        <div className="text-muted-foreground text-center text-sm">
+          Showing {startIndex + 1}-{Math.min(endIndex, optimisticCompanies.length)} of{" "}
+          {optimisticCompanies.length} companies
+        </div>
       </div>
-    </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteCompanyDialog
+        company={companyToDelete}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+      />
+
+      {/* Edit Company Dialog */}
+      {companyToEdit && (
+        <EditCompanyDialog
+          company={companyToEdit}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+    </>
   );
 }
 

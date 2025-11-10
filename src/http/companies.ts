@@ -1,63 +1,40 @@
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { prismaToCompany } from "@/lib/company-mapper";
 import {
   createCompanyInDb,
   deleteCompanyFromDb,
   findAllCompanies,
   findCompanyById,
-  isCompanyPersisted,
-  persistCompany,
   updateCompanyInDb,
 } from "@/lib/company-repository";
-import { loadDummyData } from "@/lib/data/dummy-data";
 import type { Company } from "@/types/company";
-import { cache } from "react";
+import { cacheTag } from "next/cache";
 
-export const getCompanies = cache(async (): Promise<Company[]> => {
+export async function getCompanies(): Promise<Company[]> {
+  "use cache";
+  cacheTag(CACHE_TAGS.companies);
+
   try {
-    const [dbCompanies, dummyCompanies] = await Promise.all([
-      findAllCompanies(),
-      loadDummyData(),
-    ]);
-
-    const dbCompaniesFormatted = dbCompanies.map(prismaToCompany);
-
-    const persistedIds = new Set(dbCompanies.map((c) => c.id));
-
-    const nonPersistedDummy = dummyCompanies.filter(
-      (c) => !persistedIds.has(c.id)
-    );
-
-    return [...dbCompaniesFormatted, ...nonPersistedDummy];
+    const dbCompanies = await findAllCompanies();
+    return dbCompanies.map(prismaToCompany);
   } catch (error) {
     console.error("Error fetching companies:", error);
     throw new Error("Failed to fetch companies");
   }
-});
+}
 
+export async function getCompany(id: string): Promise<Company | null> {
+  "use cache";
+  cacheTag(CACHE_TAGS.company(id));
 
-export const getCompany = cache(async (id: string): Promise<Company | null> => {
   try {
     const dbCompany = await findCompanyById(id);
-
-    if (dbCompany) {
-      return prismaToCompany(dbCompany);
-    }
-
-    const dummyCompanies = await loadDummyData();
-    const dummyCompany = dummyCompanies.find((c) => c.id === id);
-
-    if (dummyCompany) {
-      await persistCompany(dummyCompany);
-      console.log(`[Lazy Load] Persisted company: ${dummyCompany.name}`);
-      return dummyCompany;
-    }
-
-    return null;
+    return dbCompany ? prismaToCompany(dbCompany) : null;
   } catch (error) {
     console.error("Error fetching company:", error);
     throw new Error("Failed to fetch company");
   }
-});
+}
 
 export async function createCompany(data: {
   id: string;
@@ -95,19 +72,6 @@ export async function updateCompany(
   }>
 ): Promise<Company> {
   try {
-    const existingCompany = await findCompanyById(id);
-
-    if (!existingCompany) {
-      const dummyCompanies = await loadDummyData();
-      const dummyCompany = dummyCompanies.find((c) => c.id === id);
-      
-      if (dummyCompany) {
-        await persistCompany(dummyCompany);
-      } else {
-        throw new Error("Company not found");
-      }
-    }
-
     const updatedCompany = await updateCompanyInDb(id, data);
     return prismaToCompany(updatedCompany);
   } catch (error) {
@@ -119,32 +83,16 @@ export async function updateCompany(
 
 export async function deleteCompany(id: string): Promise<void> {
   try {
+    const company = await findCompanyById(id);
+    
+    if (!company) {
+      console.warn(`[Delete] Company with id ${id} not found in database`);
+      return;
+    }
+
     await deleteCompanyFromDb(id);
   } catch (error) {
     console.error("Error deleting company:", error);
-    if (error instanceof Error && error.message.includes("Record to delete does not exist")) {
-      return;
-    }
     throw new Error("Failed to delete company");
-  }
-}
-
-export async function seedDummyData(): Promise<{ count: number }> {
-  try {
-    const dummyCompanies = await loadDummyData();
-    let persistedCount = 0;
-
-    for (const company of dummyCompanies) {
-      const exists = await isCompanyPersisted(company.id);
-      if (!exists) {
-        await persistCompany(company);
-        persistedCount++;
-      }
-    }
-    
-    return { count: persistedCount };
-  } catch (error) {
-    console.error("Error seeding dummy data:", error);
-    throw new Error("Failed to seed dummy data");
   }
 }
