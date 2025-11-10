@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 "use server";
 
 import { createCompany, deleteCompany, getCompanies, updateCompany } from "@/http/companies";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 
-import { simpleCompanySchema } from "@/lib/validations/company";
+import { companySchema } from "@/lib/validations/company";
 import type { Company, FormActionState } from "@/types/company";
 import { updateTag } from "next/cache";
 
@@ -17,21 +20,37 @@ export async function createCompanyAction(
   formData: FormData
 ): Promise<FormActionState> {
   try {
+    // Helper function to parse JSON or return string
+    const parseField = (value: FormDataEntryValue | null) => {
+      if (!value) return undefined;
+      const strValue = value.toString();
+      try {
+        return JSON.parse(strValue);
+      } catch {
+        return strValue;
+      }
+    };
+
     const rawData = {
       name: formData.get("name"),
       description: formData.get("description"),
       logo_url: formData.get("logo_url"),
       website: formData.get("website"),
-      location: formData.get("location"),
-      industry: formData.get("industry"),
-      employee_count: formData.get("employee_count"),
-      founded: formData.get("founded"),
-      ceo: formData.get("ceo"),
+      location: parseField(formData.get("location")),
+      industry: parseField(formData.get("industry")),
+      employee_count: formData.get("employee_count")
+        ? Number(formData.get("employee_count"))
+        : undefined,
+      founded: formData.get("founded")
+        ? Number(formData.get("founded"))
+        : undefined,
+      ceo: parseField(formData.get("ceo")),
     };
 
-    const validatedFields = simpleCompanySchema.safeParse(rawData);
+    const validatedFields = companySchema.safeParse(rawData);
 
     if (!validatedFields.success) {
+      console.error("Create validation errors:", validatedFields.error.format());
       return {
         success: false,
         message: "Validation failed. Please check the form fields.",
@@ -68,21 +87,37 @@ export async function updateCompanyAction(
   formData: FormData
 ): Promise<FormActionState> {
   try {
+    // Helper function to parse JSON or return string
+    const parseField = (value: FormDataEntryValue | null) => {
+      if (!value) return undefined;
+      const strValue = value.toString();
+      try {
+        return JSON.parse(strValue);
+      } catch {
+        return strValue;
+      }
+    };
+
     const rawData = {
       name: formData.get("name"),
       description: formData.get("description"),
       logo_url: formData.get("logo_url"),
       website: formData.get("website"),
-      location: formData.get("location"),
-      industry: formData.get("industry"),
-      employee_count: formData.get("employee_count"),
-      founded: formData.get("founded"),
-      ceo: formData.get("ceo"),
+      location: parseField(formData.get("location")),
+      industry: parseField(formData.get("industry")),
+      employee_count: formData.get("employee_count")
+        ? Number(formData.get("employee_count"))
+        : undefined,
+      founded: formData.get("founded")
+        ? Number(formData.get("founded"))
+        : undefined,
+      ceo: parseField(formData.get("ceo")),
     };
 
-    const validatedFields = simpleCompanySchema.safeParse(rawData);
+    const validatedFields = companySchema.safeParse(rawData);
 
     if (!validatedFields.success) {
+      console.error("Update validation errors:", validatedFields.error.format());
       return {
         success: false,
         message: "Validation failed. Please check the form fields.",
