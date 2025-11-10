@@ -1,8 +1,8 @@
 import { AppSidebar } from "@/components/sidebar";
 import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 
 export default function AuthLayout({
@@ -14,11 +14,13 @@ export default function AuthLayout({
       <SidebarInset>
         <main>
           <header className="bg-background h-14 w-full">
-            <div className="bg-background fixed z-10 flex w-full items-center gap-4 px-5 md:static mt-2.5">
+            <div className="bg-background fixed z-10 flex w-full items-center gap-4 px-5 py-2.5 md:static">
               <SidebarTrigger className="cursor-pointer" />
 
               <div className="flex flex-col gap-0">
-                <h1 className="text-foreground text-3xl">Companies</h1>
+                <h1 className="text-foreground text-3xl font-medium">
+                  Happlicant Tech Task
+                </h1>
                 <p className="text-muted-foreground">
                   Manage your company portfolio
                 </p>
