@@ -80,6 +80,7 @@ export function CompaniesTable({
                       {company.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
+
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate font-medium">{company.name}</span>
                     {company.website && (
@@ -87,7 +88,7 @@ export function CompaniesTable({
                         href={company.website as Route}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-primary flex items-center gap-1 truncate text-xs"
+                        className="text-muted-foreground hover:text-primary flex max-w-56 items-center gap-1 truncate text-xs"
                       >
                         <span className="truncate">
                           {company.website.replace(/^https?:\/\//i, "")}
@@ -101,16 +102,42 @@ export function CompaniesTable({
 
               {/* Industry */}
               <TableCell>
-                <span className="text-sm">
-                  {industry !== "N/A" ? industry : "-"}
-                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-sm">
+                    {industry !== "N/A" ? industry : "-"}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {typeof company.industry === "string"
+                        ? company.industry
+                        : `${company.industry?.primary ?? "Unknown"} - ${company.industry?.sectors?.join(', ') ?? ""}`}
+                    </p>
+                  </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </TableCell>
 
               {/* Location */}
               <TableCell>
-                <span className="text-sm">
-                  {location !== "N/A" ? location : "-"}
-                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-sm">
+                        {location !== "N/A" ? location : "-"}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {typeof company.location === "string"
+                          ? company.location
+                          : `${company.location?.address ?? "Unknown"}, ${company.location?.city ?? ""}, ${company.location?.country ?? ""}`}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </TableCell>
 
               {/* Employees */}

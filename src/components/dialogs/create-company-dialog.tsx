@@ -1,119 +1,80 @@
-/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 "use client";
 
-import { updateCompanyAction } from "@/actions/companies";
+import { createCompanyAction } from "@/actions/companies";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  richCompanyFormSchema,
-  type RichCompanyFormData,
+    richCompanyFormSchema,
+    type RichCompanyFormData,
 } from "@/lib/validations/company-rich";
 import type { Company } from "@/types/company";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-interface EditCompanyDialogProps {
-  company: Company;
+interface CreateCompanyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (company: Company) => void;
 }
 
-// Helper to check if value is an object
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-export function EditCompanyDialog({
-  company,
+export function CreateCompanyDialog({
   open,
   onOpenChange,
   onSuccess,
-}: EditCompanyDialogProps) {
+}: CreateCompanyDialogProps) {
   const [isPending, startTransition] = useTransition();
-  
-  // Auto-detect if fields are already in object format
-  const [isLocationAdvanced, setIsLocationAdvanced] = useState(
-    isObject(company.location)
-  );
-  const [isIndustryAdvanced, setIsIndustryAdvanced] = useState(
-    isObject(company.industry)
-  );
-  const [isCeoAdvanced, setIsCeoAdvanced] = useState(
-    isObject(company.ceo)
-  );
+  const [isLocationAdvanced, setIsLocationAdvanced] = useState(false);
+  const [isIndustryAdvanced, setIsIndustryAdvanced] = useState(false);
+  const [isCeoAdvanced, setIsCeoAdvanced] = useState(false);
 
   const form = useForm<RichCompanyFormData>({
     resolver: zodResolver(richCompanyFormSchema),
-    defaultValues: getDefaultValues(company),
-  });
-
-  function getDefaultValues(company: Company): RichCompanyFormData {
-    // Location
-    const locationObj = isObject(company.location) ? company.location : null;
-    const locationStr = typeof company.location === "string" ? company.location : "";
-
-    // Industry
-    const industryObj = isObject(company.industry) ? company.industry : null;
-    const industryStr = typeof company.industry === "string" ? company.industry : "";
-
-    // CEO
-    const ceoObj = isObject(company.ceo) ? company.ceo : null;
-    const ceoStr = typeof company.ceo === "string" ? company.ceo : "";
-
-    return {
-      name: company.name,
-      description: company.description ?? "",
-      founded: company.founded ?? undefined,
-      employee_count: company.employee_count ?? undefined,
-      website: company.website ?? "",
-      logo_url: company.logo_url ?? "",
-      
-      // Simple fields
-      location_simple: locationStr,
-      industry_simple: industryStr,
-      ceo_simple: ceoStr,
-      
+    defaultValues: {
+      name: "",
+      industry_simple: "",
+      description: "",
+      founded: undefined,
+      location_simple: "",
+      employee_count: undefined,
+      website: "",
+      logo_url: "",
+      ceo_simple: "",
       // Advanced location fields
-      location_address: (locationObj?.address!) ?? "",
-      location_city: (locationObj?.city!) ?? "",
-      location_zip_code: (locationObj?.zip_code!) ?? "",
-      location_country: (locationObj?.country!) ?? "",
-      
+      location_address: "",
+      location_city: "",
+      location_zip_code: "",
+      location_country: "",
       // Advanced industry fields
-      industry_primary: (industryObj?.primary!) ?? "",
-      industry_sectors: Array.isArray(industryObj?.sectors) 
-        ? (industryObj.sectors).join(", ") 
-        : "",
-      
+      industry_primary: "",
+      industry_sectors: "",
       // Advanced CEO fields
-      ceo_name: (ceoObj?.name!) ?? "",
-      ceo_since: (ceoObj?.since!) ?? undefined,
-      ceo_bio: (ceoObj?.bio!) ?? "",
-    };
-  }
+      ceo_name: "",
+      ceo_since: undefined,
+      ceo_bio: "",
+    },
+  });
 
   async function onSubmit(data: RichCompanyFormData) {
     const formData = new FormData();
@@ -163,11 +124,14 @@ export function EditCompanyDialog({
     }
 
     startTransition(async () => {
-      const result = await updateCompanyAction(company.id, null, formData);
+      const result = await createCompanyAction(null, formData);
 
       if (result.success) {
         toast.success(result.message);
+        // Small delay to show the success state
+        await new Promise((resolve) => setTimeout(resolve, 300));
         onOpenChange(false);
+        form.reset();
         if (onSuccess && result.data) {
           onSuccess(result.data);
         }
@@ -186,25 +150,13 @@ export function EditCompanyDialog({
     });
   }
 
-  // Reset form when company changes
-  useEffect(() => {
-    if (company) {
-      // Reset advanced mode states based on new company data
-      setIsLocationAdvanced(isObject(company.location));
-      setIsIndustryAdvanced(isObject(company.industry));
-      setIsCeoAdvanced(isObject(company.ceo));
-      
-      form.reset(getDefaultValues(company));
-    }
-  }, [company, form]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Company</DialogTitle>
+          <DialogTitle>Create New Company</DialogTitle>
           <DialogDescription>
-            Update the company information below. Fields marked with * are
+            Add a new company to your database. Fields marked with * are
             required.
           </DialogDescription>
         </DialogHeader>
@@ -341,7 +293,35 @@ export function EditCompanyDialog({
                         {...field}
                         onChange={(e) => {
                           const value = e.target.value;
-                          field.onChange(value ? parseInt(value, 10) : undefined);
+                          field.onChange(
+                            value ? parseInt(value, 10) : undefined
+                          );
+                        }}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="employee_count"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Employees</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Number of employees"
+                        disabled={isPending}
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(
+                            value ? parseInt(value, 10) : undefined
+                          );
                         }}
                         value={field.value ?? ""}
                       />
@@ -457,32 +437,6 @@ export function EditCompanyDialog({
                   />
                 </div>
               )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="employee_count"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Employees</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Number of employees"
-                        disabled={isPending}
-                        {...field}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value ? parseInt(value, 10) : undefined);
-                        }}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             {/* CEO Section - Collapsible */}
@@ -633,7 +587,7 @@ export function EditCompanyDialog({
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending && <Spinner className="mr-2 h-4 w-4" />}
-                Save Changes
+                Create Company
               </Button>
             </DialogFooter>
           </form>
