@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
+ 
 import { tv } from "tailwind-variants";
 
 interface ContainerProps {
@@ -7,7 +7,7 @@ interface ContainerProps {
   className?: string;
 }
 const root = tv({
-  base: "mx-auto flex w-full max-w-7xl flex-col px-5 py-10 lg:py-16 min-[100rem]:px-0",
+  base: "mx-auto flex w-full max-w-7xl flex-col px-5 py-8 lg:py-12 min-[100rem]:px-0",
 });
 
 export function Container({ children, className }: ContainerProps) {

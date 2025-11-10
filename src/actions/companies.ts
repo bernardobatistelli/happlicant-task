@@ -10,7 +10,6 @@ import { companySchema } from "@/lib/validations/company";
 import type { Company, FormActionState } from "@/types/company";
 import { updateTag } from "next/cache";
 
-// Server action to fetch companies (can be called from client)
 export async function getCompaniesAction(): Promise<Company[]> {
   return await getCompanies();
 }
