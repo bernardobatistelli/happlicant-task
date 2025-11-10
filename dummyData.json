@@ -26,7 +26,7 @@
   {
     "id": "b7c1e4f5-2d6a-4b9f-8e3c-1f2d7a9b4c22",
     "name": "Exxon Mobil Corporation",
-    "description": "Integrated oil and gas company engaged in exploration, production, refining, and marketing of petroleum products.",
+    "description": "Integrated oil and gas company engaged in exploration, production, refining, and marketing of petroleum products. Integrated oil and gas company engaged in exploration, production, refining, and marketing of petroleum products.",
     "logo_url": "https://api.elbstream.com/logos/symbol/XOM",
     "website": "https://corporate.exxonmobil.com",
     "location": "Irving, Texas, USA",
@@ -49,7 +49,12 @@
     },
     "industry": {
       "primary": "Automotive & Energy",
-      "sectors": ["Electric Vehicles", "Battery Technology", "Solar Energy", "Autonomous Driving"]
+      "sectors": [
+        "Electric Vehicles",
+        "Battery Technology",
+        "Solar Energy",
+        "Autonomous Driving"
+      ]
     },
     "employee_count": 127000,
     "founded": 2003,
