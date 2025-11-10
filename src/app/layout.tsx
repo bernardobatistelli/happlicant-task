@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import "@/styles/globals.css";
 
 import { type Metadata } from "next";
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable}`}>
       <body>
         <NuqsAdapter>{children}</NuqsAdapter>
+        <Toaster richColors />
       </body>
     </html>
   );
