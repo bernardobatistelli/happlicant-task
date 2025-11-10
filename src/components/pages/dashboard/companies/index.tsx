@@ -2,6 +2,7 @@
 
 import { deleteCompanyAction } from "@/actions/companies";
 import { CompanyCard, CompanyCardSkeleton } from "@/components/company-card";
+import { CreateCompanyDialog } from "@/components/dialogs/create-company-dialog";
 import { DeleteCompanyDialog } from "@/components/dialogs/delete-company-dialog";
 import { EditCompanyDialog } from "@/components/dialogs/edit-company-dialog";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import {
   PaginationItem,
 } from "@/components/ui/pagination";
 import type { Company } from "@/types/company";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -34,6 +35,8 @@ export function CompaniesPaginatedList({
     parseAsInteger.withDefault(initialPage),
   );
 
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
 
@@ -44,13 +47,21 @@ export function CompaniesPaginatedList({
 
   const [optimisticCompanies, updateOptimistic] = useOptimistic(
     companies,
-    (state, action: { type: "delete"; id: string } | { type: "update"; company: Company }) => {
+    (
+      state,
+      action:
+        | { type: "delete"; id: string }
+        | { type: "update"; company: Company }
+        | { type: "create"; company: Company }
+    ) => {
       if (action.type === "delete") {
         return state.filter((c) => c.id !== action.id);
-      } else {
+      } else if (action.type === "update") {
         return state.map((c) => (c.id === action.company.id ? action.company : c));
+      } else {
+        return [action.company, ...state];
       }
-    },
+    }
   );
 
   const activePage = currentPage ?? initialPage;
@@ -87,6 +98,12 @@ export function CompaniesPaginatedList({
   const handleEditSuccess = (updatedCompany: Company) => {
     startTransition(() => {
       updateOptimistic({ type: "update", company: updatedCompany });
+    });
+  };
+
+  const handleCreateSuccess = (newCompany: Company) => {
+    startTransition(() => {
+      updateOptimistic({ type: "create", company: newCompany });
     });
   };
 
@@ -145,8 +162,14 @@ export function CompaniesPaginatedList({
   return (
     <>
       <div className="space-y-8">
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:hidden">
-          {currentCompanies.map((company) => (
+        <div className="flex justify-end">
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Company
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:hidden">{currentCompanies.map((company) => (
             <CompanyCard
               key={company.id}
               company={company}
@@ -245,11 +268,17 @@ export function CompaniesPaginatedList({
           onSuccess={handleEditSuccess}
         />
       )}
+
+      {/* Create Company Dialog */}
+      <CreateCompanyDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={handleCreateSuccess}
+      />
     </>
   );
 }
 
-// Loading skeleton for the entire list
 export function CompaniesListSkeleton({
   itemsPerPage = 9,
 }: {
@@ -257,14 +286,12 @@ export function CompaniesListSkeleton({
 }) {
   return (
     <div className="space-y-8">
-      {/* Grid Skeleton - Hidden on xl screens */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:hidden">
         {Array.from({ length: itemsPerPage }).map((_, index) => (
           <CompanyCardSkeleton key={index} />
         ))}
       </div>
 
-      {/* Table Skeleton - Visible only on xl screens */}
       <div className="hidden xl:block">
         <CompaniesTableSkeleton rows={itemsPerPage} />
       </div>
