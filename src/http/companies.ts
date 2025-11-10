@@ -10,12 +10,15 @@ import {
 import type { Company } from "@/types/company";
 import { cacheTag } from "next/cache";
 
-export async function getCompanies(): Promise<Company[]> {
+export async function getCompanies(filters?: {
+  search?: string;
+  industry?: string;
+}): Promise<Company[]> {
   "use cache";
   cacheTag(CACHE_TAGS.companies);
 
   try {
-    const dbCompanies = await findAllCompanies();
+    const dbCompanies = await findAllCompanies(filters);
     return dbCompanies.map(prismaToCompany);
   } catch (error) {
     console.error("Error fetching companies:", error);

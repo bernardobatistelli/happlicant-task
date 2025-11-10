@@ -13,7 +13,7 @@ export default function AuthLayout({
       <AppSidebar />
       <SidebarInset>
         <main>
-          <header className="bg-background h-14 w-full">
+          <header className="bg-background h-20 w-full">
             <div className="bg-background fixed z-10 flex w-full items-center gap-4 px-5 py-2.5 md:static">
               <SidebarTrigger className="cursor-pointer" />
 

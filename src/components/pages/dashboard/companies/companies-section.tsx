@@ -10,8 +10,22 @@ interface CompaniesSectionProps {
 export async function CompaniesSection({
   searchParams,
 }: CompaniesSectionProps) {
-  const { page } = await companiesSearchParamsCache.parse(searchParams);
-  const companies = await getCompanies();
+  const { page, itemsPerPage, search, industry } = await companiesSearchParamsCache.parse(searchParams);
+  
+  const filters = {
+    ...(search && { search }),
+    ...(industry && { industry }),
+  };
+  
+  const companies = await getCompanies(Object.keys(filters).length > 0 ? filters : undefined);
 
-  return <CompaniesPaginatedList companies={companies} initialPage={page} />;
+  return (
+    <CompaniesPaginatedList
+      companies={companies}
+      initialPage={page}
+      initialItemsPerPage={itemsPerPage}
+      initialSearch={search}
+      initialIndustry={industry}
+    />
+  );
 }

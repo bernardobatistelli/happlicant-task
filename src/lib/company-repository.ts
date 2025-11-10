@@ -15,8 +15,47 @@ export async function findCompanyById(id: string) {
   });
 }
 
-export async function findAllCompanies() {
+export async function findAllCompanies(filters?: {
+  search?: string;
+  industry?: string;
+}) {
+  const orConditions: Array<Record<string, unknown>> = [];
+
+  if (filters?.search) {
+    orConditions.push(
+      {
+        name: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
+      },
+      {
+        description: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
+      }
+    );
+  }
+
+  if (filters?.industry) {
+    orConditions.push(
+      {
+        industry: {
+          equals: filters.industry,
+        },
+      },
+      {
+        industry: {
+          path: ["primary"],
+          string_contains: filters.industry,
+        },
+      }
+    );
+  }
+
   return await db.company.findMany({
+    where: orConditions.length > 0 ? { OR: orConditions } : undefined,
     orderBy: { name: "asc" },
   });
 }

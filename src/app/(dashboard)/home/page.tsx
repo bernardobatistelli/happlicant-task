@@ -8,7 +8,7 @@ type PageProps = {
   searchParams: Promise<SearchParams>;
 };
 
-export default async function DashboardPage({ searchParams }: PageProps) {
+export default function DashboardPage({ searchParams }: PageProps) {
   return (
     <Container>
       <div className="space-y-6">

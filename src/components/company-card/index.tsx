@@ -19,6 +19,8 @@ import {
 } from "@/lib/utils/company";
 import type { Company } from "@/types/company";
 import { Calendar, Globe, MapPin, Pencil, Trash2, Users } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
 import {
   Tooltip,
   TooltipContent,
@@ -111,16 +113,16 @@ export function CompanyCard({ company, onEdit, onDelete }: CompanyCardProps) {
           )}
 
           {company.website && (
-            <div className="flex items-center gap-2 text-sm">
-              <Globe className="text-muted-foreground size-4 shrink-0 text-sm" />
-              <a
-                href={company.website}
+            <div className="flex items-center gap-2 text-sm max-w-full truncate">
+              <Globe className="text-muted-foreground size-4 shrink-0 text-sm max-w-56 truncate" />
+              <Link
+                href={company.website as Route}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
                 {company.website.replace(/^https?:\/\//i, "")}
-              </a>
+              </Link>
             </div>
           )}
         </div>
