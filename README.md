@@ -10,6 +10,35 @@ Build a simple **Company Management App**.
 
 The base project (Next.js + Shadcn) is already set up for you — just focus on building the functionality and UI. You'll also find a type for "Company" in the types folder.
 
+## Setup
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Start the database:**
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Run database migrations:**
+   ```bash
+   npx prisma migrate dev
+   ```
+
+4. **Seed the database with sample data:**
+   ```bash
+   npm run db:seed
+   ```
+
+5. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+The app will be available at `http://localhost:3000`.
+
 ## Requirements
 
 ### 1. Display Companies

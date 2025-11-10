@@ -1,12 +1,16 @@
 "use server";
 
-import { createCompany, deleteCompany, seedDummyData, updateCompany } from "@/http/companies";
+import { createCompany, deleteCompany, getCompanies, updateCompany } from "@/http/companies";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 
 import { simpleCompanySchema } from "@/lib/validations/company";
-import type { FormActionState } from "@/types/company";
-import { revalidateTag } from "next/cache";
+import type { Company, FormActionState } from "@/types/company";
+import { updateTag } from "next/cache";
 
+// Server action to fetch companies (can be called from client)
+export async function getCompaniesAction(): Promise<Company[]> {
+  return await getCompanies();
+}
 
 export async function createCompanyAction(
   prevState: FormActionState | null,
@@ -42,7 +46,7 @@ export async function createCompanyAction(
       ...validatedFields.data,
     });
 
-    revalidateTag(CACHE_TAGS.companies, "max");
+    updateTag(CACHE_TAGS.companies);
 
     return {
       success: true,
@@ -88,8 +92,11 @@ export async function updateCompanyAction(
 
     const updatedCompany = await updateCompany(id, validatedFields.data);
 
-    revalidateTag(CACHE_TAGS.companies, "max");
-    revalidateTag(CACHE_TAGS.company(id), "max");
+    // Small delay to show optimistic update
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    updateTag(CACHE_TAGS.companies);
+    updateTag(CACHE_TAGS.company(id));
 
     return {
       success: true,
@@ -111,8 +118,8 @@ export async function deleteCompanyAction(
   try {
     await deleteCompany(id);
 
-    revalidateTag(CACHE_TAGS.companies, "max");
-    revalidateTag(CACHE_TAGS.company(id), "max");
+    updateTag(CACHE_TAGS.companies);
+    updateTag(CACHE_TAGS.company(id));
 
     return {
       success: true,
@@ -133,8 +140,8 @@ export async function bulkDeleteCompanies(
   try {
     await Promise.all(ids.map((id) => deleteCompany(id)));
 
-    revalidateTag(CACHE_TAGS.companies, "max");
-    ids.forEach((id) => revalidateTag(CACHE_TAGS.company(id), "max"));
+    updateTag(CACHE_TAGS.companies);
+    ids.forEach((id) => updateTag(CACHE_TAGS.company(id)));
 
     return {
       success: true,
@@ -145,25 +152,6 @@ export async function bulkDeleteCompanies(
     return {
       success: false,
       message: "Failed to delete companies. Please try again.",
-    };
-  }
-}
-
-export async function seedDummyDataAction(): Promise<FormActionState> {
-  try {
-    const result = await seedDummyData();
-    
-    revalidateTag(CACHE_TAGS.companies, "max");
-    
-    return {
-      success: true,
-      message: `Successfully seeded ${result.count} ${result.count === 1 ? "company" : "companies"}!`,
-    };
-  } catch (error) {
-    console.error("Error in seedDummyDataAction:", error);
-    return {
-      success: false,
-      message: "Failed to seed dummy data. Please try again.",
     };
   }
 }
